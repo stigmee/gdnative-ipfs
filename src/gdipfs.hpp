@@ -76,7 +76,12 @@ public: // Godot interfaces
 
 public:
 
-    bool get_file(godot::String const url, godot::String const path);
+    bool download(godot::String const url, godot::String const path);
+    godot::String error();
+
+private:
+
+    std::string m_error;
 };
 
 #  if !defined(_WIN32)

@@ -20,13 +20,15 @@
 
 //------------------------------------------------------------------------------
 #include "gdipfs.hpp"
+#include <fstream>
 
 //------------------------------------------------------------------------------
 // in a GDNative module, "_bind_methods" is replaced by the "_register_methods"
 // method CefRefPtr<CefBrowser> m_browser;this is used to expose various methods of this class to Godot
 void GDIpfs::_register_methods()
 {
-    godot::register_method("get_file", &GDIpfs::get_file);
+    godot::register_method("download", &GDIpfs::download);
+    godot::register_method("get_error", &GDIpfs::error);
 }
 
 //------------------------------------------------------------------------------
@@ -34,20 +36,34 @@ void GDIpfs::_init()
 {}
 
 //------------------------------------------------------------------------------
-bool GDIpfs::get_file(godot::String const url, godot::String const path)
+bool GDIpfs::download(godot::String const url, godot::String const path)
 {
     try
     {
+        // Clear previous error
+        m_error.clear();
+
+        // Download data from IPFS
         std::stringstream contents;
         ipfs::Client client("localhost", 5001);
         client.FilesGet(url.utf8().get_data(), &contents);
-        std::cout << contents.str() << std::endl;
+
+        // Save download data into file
+        std::ofstream outFile(path.utf8().get_data());
+        outFile << contents.rdbuf();
     }
     catch (std::exception const& e)
     {
-        std::cerr << e.what() << std::endl;
+        m_error = e.what();
+        std::cerr << m_error << std::endl;
         return false;
     }
 
     return true;
+}
+
+//------------------------------------------------------------------------------
+godot::String GDIpfs::error()
+{
+   return godot::String(m_error.c_str());
 }
